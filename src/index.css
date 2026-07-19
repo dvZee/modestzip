@@ -1385,3 +1385,11 @@ button, input, select, textarea {
     opacity: 1;
   }
 }
+
+.breadcrumb-link {
+  transition: var(--transition-smooth);
+}
+.breadcrumb-link:hover {
+  color: hsl(var(--color-plum));
+}
+

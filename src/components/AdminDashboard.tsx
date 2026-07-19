@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DollarSign, ClipboardList, Package, CheckCircle, Upload, Trash2, ShieldCheck, TrendingUp } from 'lucide-react';
 import type { Product, Order } from '../data/catalog';
 
@@ -18,6 +18,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdateOrderStatus,
 }) => {
   const [activeTab, setActiveTab] = useState<'orders' | 'products'>('orders');
+
+  useEffect(() => {
+    document.title = "ModestZip Admin Console";
+    window.scrollTo(0, 0);
+  }, []);
   
   // Product Upload Form State
   const [title, setTitle] = useState('');

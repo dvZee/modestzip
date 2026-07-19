@@ -1,26 +1,25 @@
 import React from 'react';
-import { ShoppingBag, Search, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShoppingBag, Search } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'shop' | 'admin';
-  setView: (view: 'shop' | 'admin') => void;
   cartCount: number;
   onCartToggle: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  showSearch: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  currentView,
-  setView,
   cartCount,
   onCartToggle,
   searchQuery,
   setSearchQuery,
+  showSearch,
 }) => {
   return (
     <header className="navbar-glass">
-      <div className="nav-logo" style={{ cursor: 'pointer' }} onClick={() => setView('shop')}>
+      <Link to="/" className="nav-logo" style={{ textDecoration: 'none' }}>
         {/* Modern Minimalist SVG Logo combining 'M', 'Z', and infinity/crescent */}
         <svg
           width="32"
@@ -49,26 +48,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         </svg>
         <span style={{ color: 'hsl(var(--color-plum))' }}>Modest</span>
         <span style={{ color: 'hsl(var(--color-gold-dark))', fontWeight: '300' }}>Zip</span>
-      </div>
+      </Link>
 
       <nav className="nav-links">
-        <span
-          className={`nav-link ${currentView === 'shop' ? 'active' : ''}`}
-          onClick={() => setView('shop')}
-        >
+        <Link to="/" className="nav-link active">
           Collection
-        </span>
-        <span
-          className={`nav-link ${currentView === 'admin' ? 'active' : ''}`}
-          onClick={() => setView('admin')}
-          style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
-        >
-          <ShieldCheck size={16} /> Admin Panel
-        </span>
+        </Link>
       </nav>
 
       <div className="nav-actions">
-        {currentView === 'shop' && (
+        {showSearch && (
           <div className="search-input-wrapper" style={{ minWidth: '200px' }}>
             <input
               type="text"

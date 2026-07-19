@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { ProductCard } from './components/ProductCard';
-import { ProductDetailModal } from './components/ProductDetailModal';
+import { ProductView } from './components/ProductView';
 import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -20,9 +21,11 @@ interface Toast {
   message: string;
 }
 
-function App() {
-  const [currentView, setView] = useState<'shop' | 'admin'>('shop');
-  
+// Inner App Content to access Router Hooks (like useNavigate and useLocation)
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Database States
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -32,11 +35,10 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   
-  // Browsing States
+  // Home Catalog Filtering States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   
   // UI States
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -175,7 +177,7 @@ function App() {
     updateOrdersState(updatedOrders);
   };
 
-  // Filter and Sort Products
+  // Filter and Sort Products (For Home Storefront Grid)
   const filteredProducts = products
     .filter((prod) => {
       const matchesSearch =
@@ -197,93 +199,119 @@ function App() {
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Check if current page is homepage to show search bar
+  const isHomePage = location.pathname === '/';
+
   return (
     <>
       <Navbar
-        currentView={currentView}
-        setView={setView}
         cartCount={cartCount}
         onCartToggle={() => setIsCartOpen(!isCartOpen)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        showSearch={isHomePage}
       />
 
-      {currentView === 'shop' ? (
-        <main style={{ minHeight: '100vh' }}>
-          {/* Hero Lookbook */}
-          <Hero onShopClick={() => {
-            const el = document.getElementById('catalog-section');
-            el?.scrollIntoView({ behavior: 'smooth' });
-          }} />
+      <Routes>
+        {/* Route 1: Home Storefront Catalog */}
+        <Route
+          path="/"
+          element={
+            <main style={{ minHeight: '100vh' }}>
+              {/* Hero Lookbook */}
+              <Hero
+                onShopClick={() => {
+                  const el = document.getElementById('catalog-section');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              />
 
-          {/* Catalog Section */}
-          <section id="catalog-section" style={{ scrollMarginTop: '80px' }}>
-            <div className="section-title-wrap">
-              <span className="section-subtitle">Luxurious Drapes</span>
-              <h2 className="section-title text-serif">Explore The Debut Edit</h2>
-            </div>
+              {/* Catalog Section */}
+              <section id="catalog-section" style={{ scrollMarginTop: '80px' }}>
+                <div className="section-title-wrap">
+                  <span className="section-subtitle">Luxurious Drapes</span>
+                  <h2 className="section-title text-serif">Explore The Debut Edit</h2>
+                </div>
 
-            {/* Filter Bar */}
-            <div className="filter-bar">
-              <div className="category-filters">
-                {['All', 'Abayas', 'Hijabs', 'Kaftans'].map((cat) => (
-                  <button
-                    key={cat}
-                    className={`filter-btn ${selectedCategory === cat ? 'active' : ''}`}
-                    onClick={() => setSelectedCategory(cat)}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+                {/* Filter Bar */}
+                <div className="filter-bar">
+                  <div className="category-filters">
+                    {['All', 'Abayas', 'Hijabs', 'Kaftans'].map((cat) => (
+                      <button
+                        key={cat}
+                        className={`filter-btn ${selectedCategory === cat ? 'active' : ''}`}
+                        onClick={() => setSelectedCategory(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '0.85rem', color: 'hsl(var(--color-stone))', fontWeight: '500' }}>Sort By:</span>
-                <select
-                  className="sort-select"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                >
-                  <option value="featured">Featured Edit</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="name">Alphabetical</option>
-                </select>
-              </div>
-            </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'hsl(var(--color-stone))', fontWeight: '500' }}>Sort By:</span>
+                    <select
+                      className="sort-select"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="featured">Featured Edit</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
+                      <option value="name">Alphabetical</option>
+                    </select>
+                  </div>
+                </div>
 
-            {/* Catalog Grid */}
-            {filteredProducts.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '100px 0', color: 'hsl(var(--color-stone))' }}>
-                <h3 className="text-serif" style={{ fontSize: '1.5rem', marginBottom: '8px' }}>No products found</h3>
-                <p>Try refining your search terms or select another category filter.</p>
-              </div>
-            ) : (
-              <div className="product-grid">
-                {filteredProducts.map((prod) => (
-                  <ProductCard
-                    key={prod.id}
-                    product={prod}
-                    onViewDetails={setSelectedProduct}
-                    onAddToCart={handleAddToCart}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        </main>
-      ) : (
-        /* Admin Console */
-        <AdminDashboard
-          products={products}
-          orders={orders}
-          onAddProduct={handleAddProduct}
-          onDeleteProduct={handleDeleteProduct}
-          onUpdateOrderStatus={handleUpdateOrderStatus}
+                {/* Catalog Grid */}
+                {filteredProducts.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '100px 0', color: 'hsl(var(--color-stone))' }}>
+                    <h3 className="text-serif" style={{ fontSize: '1.5rem', marginBottom: '8px' }}>No products found</h3>
+                    <p>Try refining your search terms or select another category filter.</p>
+                  </div>
+                ) : (
+                  <div className="product-grid">
+                    {filteredProducts.map((prod) => (
+                      <ProductCard
+                        key={prod.id}
+                        product={prod}
+                        onViewDetails={(p) => navigate(`/product/${p.id}`)}
+                        onAddToCart={handleAddToCart}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </main>
+          }
         />
-      )}
 
-      {/* Brand Footer */}
+        {/* Route 2: Dedicated Product Details Page */}
+        <Route
+          path="/product/:id"
+          element={
+            <ProductView
+              products={products}
+              onAddToCart={handleAddToCart}
+            />
+          }
+        />
+
+        {/* Route 3: Hidden Admin Console */}
+        <Route
+          path="/admin"
+          element={
+            <AdminDashboard
+              products={products}
+              orders={orders}
+              onAddProduct={handleAddProduct}
+              onDeleteProduct={handleDeleteProduct}
+              onUpdateOrderStatus={handleUpdateOrderStatus}
+            />
+          }
+        />
+      </Routes>
+
+      {/* Brand Footer (No links to Admin Panel) */}
       <footer className="footer-wrap">
         <div className="footer-grid">
           <div className="footer-brand">
@@ -298,10 +326,9 @@ function App() {
           <div className="footer-col">
             <h3>Quick Links</h3>
             <ul>
-              <li><a href="#" onClick={(e) => { e.preventDefault(); setView('shop'); }}>Storefront Catalog</a></li>
-              <li><a href="#" onClick={(e) => { e.preventDefault(); setView('admin'); }}>Admin Console</a></li>
-              <li><a href="#catalog-section">Shop Abayas</a></li>
-              <li><a href="#catalog-section">Shop Hijabs</a></li>
+              <li><Link to="/">Storefront Catalog</Link></li>
+              <li><a href="#catalog-section" onClick={(e) => { e.preventDefault(); navigate('/'); setTimeout(() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }}>Shop Abayas</a></li>
+              <li><a href="#catalog-section" onClick={(e) => { e.preventDefault(); navigate('/'); setTimeout(() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }}>Shop Hijabs</a></li>
             </ul>
           </div>
 
@@ -348,13 +375,6 @@ function App() {
         }}
       />
 
-      {/* Product Detail Popup Modal */}
-      <ProductDetailModal
-        product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-      />
-
       {/* Checkout Processing Overlay */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
@@ -377,4 +397,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+}
